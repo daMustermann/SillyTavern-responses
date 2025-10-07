@@ -3853,6 +3853,66 @@
                                     <option value="">Select a model</option>
                                 </select>
                             </div>
+                            <div id="responses_advanced_settings" class="margin-top-10">
+                                <h5 class="margin0 marginBot5">
+                                    <span data-i18n="Advanced Settings">Advanced Settings</span>
+                                </h5>
+                                <div class="margin-top-10">
+                                    <label for="responses_reasoning_effort" data-i18n="Reasoning Effort (o1/o3 models)">
+                                        <span>Reasoning Effort (o1/o3 models)</span>
+                                    </label>
+                                    <small data-i18n="Controls the depth of reasoning for thinking models">Controls the depth of reasoning for thinking models</small>
+                                    <select id="responses_reasoning_effort" class="margin0 marginBot10">
+                                        <option value="low">Low - Fast but less thorough</option>
+                                        <option value="medium" selected>Medium - Balanced (default)</option>
+                                        <option value="high">High - Thorough but slower</option>
+                                    </select>
+                                </div>
+                                <div class="margin-top-10">
+                                    <label class="checkbox_label">
+                                        <input id="responses_enable_web_search" type="checkbox" />
+                                        <span data-i18n="Enable Web Search">Enable Web Search</span>
+                                    </label>
+                                    <small class="notes" data-i18n="Allows the model to search the web for information">Allows the model to search the web for information</small>
+                                </div>
+                                <div class="margin-top-10">
+                                    <label class="checkbox_label">
+                                        <input id="responses_enable_code_execution" type="checkbox" />
+                                        <span data-i18n="Enable Code Execution">Enable Code Execution</span>
+                                    </label>
+                                    <small class="notes" data-i18n="Allows the model to run code">Allows the model to run code</small>
+                                </div>
+                                <div class="margin-top-10">
+                                    <label for="responses_temperature" data-i18n="Temperature">
+                                        <span>Temperature</span>
+                                        <small>(<span id="responses_temperature_value">1.00</span>)</small>
+                                    </label>
+                                    <input id="responses_temperature" type="range" min="0" max="2" step="0.01" value="1.0" />
+                                    <small class="notes" data-i18n="Controls randomness in responses">Controls randomness in responses</small>
+                                </div>
+                                <div class="margin-top-10">
+                                    <label for="responses_max_tokens" data-i18n="Max Tokens">
+                                        <span>Max Tokens</span>
+                                    </label>
+                                    <input id="responses_max_tokens" type="number" class="text_pole" placeholder="Auto (leave empty)" min="1" step="1" />
+                                    <small class="notes" data-i18n="Maximum tokens in the response">Maximum tokens in the response</small>
+                                </div>
+                                <div class="margin-top-10">
+                                    <label for="responses_top_p" data-i18n="Top P">
+                                        <span>Top P</span>
+                                        <small>(<span id="responses_top_p_value">1.00</span>)</small>
+                                    </label>
+                                    <input id="responses_top_p" type="range" min="0" max="1" step="0.01" value="1.0" />
+                                    <small class="notes" data-i18n="Nucleus sampling threshold">Nucleus sampling threshold</small>
+                                </div>
+                                <div class="margin-top-10">
+                                    <label class="checkbox_label">
+                                        <input id="responses_stream" type="checkbox" />
+                                        <span data-i18n="Enable Streaming">Enable Streaming</span>
+                                    </label>
+                                    <small class="notes" data-i18n="Stream responses token by token">Stream responses token by token</small>
+                                </div>
+                            </div>
                             <div class="flex-container margin-top-10">
                                 <div id="api_button_responses" class="api_button menu_button menu_button_icon" type="submit" data-i18n="Connect">Connect</div>
                                 <div class="api_loading menu_button menu_button_icon" data-i18n="Cancel">Cancel</div>

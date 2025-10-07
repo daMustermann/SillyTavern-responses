@@ -1,6 +1,15 @@
 /**
  * Responses API integration for SillyTavern
  * Handles the /v1/responses endpoint from OpenAI and compatible servers
+ *
+ * The Responses API provides advanced features including:
+ * - Stateful conversations using previous_response_id
+ * - Built-in tools (web search, code execution)
+ * - Reasoning effort control for o1/o3 models
+ * - Streaming support
+ * - Enhanced context management
+ *
+ * @see https://platform.openai.com/docs/api-reference/responses
  */
 
 import { saveSettingsDebounced, getRequestHeaders } from '../script.js';
@@ -277,6 +286,10 @@ export function initResponsesApi() {
         const key = String($(this).val());
         await writeSecret(SECRET_KEYS.RESPONSES, key);
     });
+
+    // Initialize UI display values
+    $('#responses_temperature_value').text(responses_settings.temperature.toFixed(2));
+    $('#responses_top_p_value').text(responses_settings.top_p.toFixed(2));
 
     console.log('Responses API initialized');
 }
