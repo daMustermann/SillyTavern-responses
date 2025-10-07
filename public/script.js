@@ -113,6 +113,13 @@ import {
 } from './scripts/openai.js';
 
 import {
+    responses_settings,
+    loadResponsesSettings,
+    initResponsesApi,
+    sendResponsesRequest,
+} from './scripts/responses.js';
+
+import {
     generateNovelWithStreaming,
     getNovelGenerationData,
     getKayraMaxContextTokens,
@@ -651,6 +658,7 @@ async function firstLoadInit() {
     initDefaultSlashCommands();
     initTextGenModels();
     initOpenAI();
+    initResponsesApi();
     initTextGenSettings();
     initKoboldSettings();
     initNovelAISettings();
@@ -5147,6 +5155,10 @@ export async function sendGenerationRequest(type, data, options = {}) {
         return await sendOpenAIRequest(type, data.prompt, abortController.signal, options);
     }
 
+    if (main_api === 'responses') {
+        return await sendResponsesRequest(type, data.prompt, abortController.signal);
+    }
+
     if (main_api === 'koboldhorde') {
         return await generateHorde(data.prompt, data, abortController.signal, true);
     }
@@ -6707,6 +6719,15 @@ export function changeMainAPI() {
             maxContextElem: $('#max_context_block'),
             amountGenElem: $('#amount_gen_block'),
         },
+        'responses': {
+            apiStreaming: $('#NULL_SELECTOR'),
+            apiSettings: $('#NULL_SELECTOR'),
+            apiConnector: $('#responses_api'),
+            apiPresets: $('#NULL_SELECTOR'),
+            apiRanges: $('#NULL_SELECTOR'),
+            maxContextElem: $('#NULL_SELECTOR'),
+            amountGenElem: $('#NULL_SELECTOR'),
+        },
     };
     //console.log('--- apiElements--- ');
     //console.log(apiElements);
@@ -6865,6 +6886,9 @@ export async function getSettings() {
         // OpenAI
         loadOpenAISettings(data, settings.oai_settings ?? settings);
 
+        // Responses API
+        loadResponsesSettings(settings);
+
         // Horde
         loadHordeSettings(settings);
 
@@ -6980,6 +7004,9 @@ export async function saveSettings(loopCounter = 0) {
         nai_settings: nai_settings,
         kai_settings: kai_settings,
         oai_settings: oai_settings,
+        responses_source: responses_settings.responses_source,
+        responses_custom_url: responses_settings.custom_url,
+        responses_model: responses_settings.model,
         background: background_settings,
         proxies: proxies,
         selected_proxy: selected_proxy,
