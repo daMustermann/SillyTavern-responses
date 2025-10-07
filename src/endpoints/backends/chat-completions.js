@@ -55,6 +55,7 @@ import {
 import { getVertexAIAuth, getProjectIdFromServiceAccount } from '../google.js';
 
 const API_OPENAI = 'https://api.openai.com/v1';
+const API_OPENAI_RESPONSES = 'https://api.openai.com/v1'; // Same base URL, different endpoint (/v1/responses)
 const API_CLAUDE = 'https://api.anthropic.com/v1';
 const API_MISTRAL = 'https://api.mistral.ai/v1';
 const API_COHERE_V1 = 'https://api.cohere.ai/v1';
@@ -1391,6 +1392,130 @@ async function sendAzureOpenAIRequest(request, response) {
     }
 }
 
+/**
+ * Sends a request to the OpenAI Responses API endpoint (/v1/responses).
+ * This endpoint is designed for tools, instructions, and structured outputs,
+ * compatible with LM Studio and other OpenAI-compatible servers.
+ *
+ * Key differences from /v1/chat/completions:
+ * - Uses /v1/responses endpoint instead of /v1/chat/completions
+ * - Request body uses: instructions, input, tools, previous_response_id, metadata
+ * - Response includes: output, output_text, tool_calls
+ *
+ * @param {express.Request} request Express request object
+ * @param {express.Response} response Express response object
+ */
+async function sendOpenAIResponsesRequest(request, response) {
+    const apiUrl = new URL(request.body.reverse_proxy || API_OPENAI_RESPONSES).toString();
+    const apiKey = request.body.reverse_proxy ? request.body.proxy_password : readSecret(request.user.directories, SECRET_KEYS.OPENAI);
+
+    if (!apiKey && !request.body.reverse_proxy) {
+        console.warn('OpenAI API key is missing.');
+        return response.status(400).send({ error: true });
+    }
+
+    const endpointUrl = `${apiUrl}/responses`;
+
+    // Convert chat messages to instructions format for Responses API
+    let instructions = '';
+    let input = '';
+
+    if (Array.isArray(request.body.messages)) {
+        // Extract system messages as instructions
+        const systemMessages = request.body.messages.filter(m => m.role === 'system');
+        if (systemMessages.length > 0) {
+            instructions = systemMessages.map(m => m.content).join('\n\n');
+        }
+
+        // Use the last user message as input
+        const userMessages = request.body.messages.filter(m => m.role === 'user');
+        if (userMessages.length > 0) {
+            input = userMessages[userMessages.length - 1].content;
+        }
+    }
+
+    // Build request body for Responses API
+    const requestBody = {
+        model: request.body.model,
+        instructions: instructions || undefined,
+        input: input || undefined,
+        tools: Array.isArray(request.body.tools) && request.body.tools.length > 0 ? request.body.tools : undefined,
+        previous_response_id: request.body.previous_response_id || undefined,
+        metadata: request.body.metadata || undefined,
+        stream: request.body.stream || false,
+        temperature: request.body.temperature,
+        max_tokens: request.body.max_tokens,
+        top_p: request.body.top_p,
+    };
+
+    const controller = new AbortController();
+    request.socket.removeAllListeners('close');
+    request.socket.on('close', () => controller.abort());
+
+    const config = {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + apiKey,
+        },
+        body: JSON.stringify(requestBody),
+        signal: controller.signal,
+    };
+
+    console.debug('OpenAI Responses API request:', requestBody);
+
+    try {
+        controller.signal.throwIfAborted();
+        const fetchResponse = await fetch(endpointUrl, config);
+
+        if (request.body.stream) {
+            console.info('Streaming request in progress (Responses API)');
+            forwardFetchResponse(fetchResponse, response);
+            return;
+        }
+
+        if (fetchResponse.ok) {
+            const json = await fetchResponse.json();
+
+            // Transform Responses API response to chat completions format for compatibility
+            const transformedResponse = {
+                id: json.id || `resp-${Date.now()}`,
+                object: 'chat.completion',
+                created: json.created || Math.floor(Date.now() / 1000),
+                model: json.model || request.body.model,
+                choices: [{
+                    index: 0,
+                    message: {
+                        role: 'assistant',
+                        content: json.output_text || json.output || '',
+                        tool_calls: json.tool_calls || undefined,
+                    },
+                    finish_reason: json.finish_reason || 'stop',
+                }],
+                usage: json.usage || undefined,
+            };
+
+            response.send(transformedResponse);
+            console.debug('OpenAI Responses API response (transformed):', transformedResponse);
+        } else {
+            const text = await fetchResponse.text();
+            const data = tryParse(text) || { error: { message: fetchResponse.statusText || 'Unknown error occurred' } };
+            return response.status(500).send(data);
+        }
+    } catch (error) {
+        console.error('OpenAI Responses API request failed', error);
+        const message = error.name === 'AbortError'
+            ? 'Request was aborted by the client.'
+            : (error.message || 'An unknown network error occurred.');
+
+        if (!response.headersSent) {
+            response.status(502).send({ error: { message, ...error } });
+        } else {
+            response.end();
+        }
+    }
+}
+
 export const router = express.Router();
 
 router.post('/status', async function (request, statusResponse) {
@@ -1403,6 +1528,11 @@ router.post('/status', async function (request, statusResponse) {
 
     if (request.body.chat_completion_source === CHAT_COMPLETION_SOURCES.OPENAI) {
         apiUrl = new URL(request.body.reverse_proxy || API_OPENAI).toString();
+        apiKey = request.body.reverse_proxy ? request.body.proxy_password : readSecret(request.user.directories, SECRET_KEYS.OPENAI);
+        headers = {};
+    } else if (request.body.chat_completion_source === CHAT_COMPLETION_SOURCES.OPENAI_RESPONSES) {
+        // OpenAI Responses API uses same authentication and base URL as OpenAI
+        apiUrl = new URL(request.body.reverse_proxy || API_OPENAI_RESPONSES).toString();
         apiKey = request.body.reverse_proxy ? request.body.proxy_password : readSecret(request.user.directories, SECRET_KEYS.OPENAI);
         headers = {};
     } else if (request.body.chat_completion_source === CHAT_COMPLETION_SOURCES.OPENROUTER) {
@@ -1761,6 +1891,7 @@ router.post('/generate', function (request, response) {
     }
 
     switch (request.body.chat_completion_source) {
+        case CHAT_COMPLETION_SOURCES.OPENAI_RESPONSES: return sendOpenAIResponsesRequest(request, response);
         case CHAT_COMPLETION_SOURCES.CLAUDE: return sendClaudeRequest(request, response);
         case CHAT_COMPLETION_SOURCES.AI21: return sendAI21Request(request, response);
         case CHAT_COMPLETION_SOURCES.MAKERSUITE: return sendMakerSuiteRequest(request, response);
