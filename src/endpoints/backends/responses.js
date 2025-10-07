@@ -170,7 +170,24 @@ router.post('/generate', async function (request, response) {
         temperature: request.body.temperature,
         max_tokens: request.body.max_tokens,
         top_p: request.body.top_p,
+        reasoning_effort: request.body.reasoning_effort || undefined, // For o1/o3 models
     };
+
+    // Add web search tool if enabled
+    if (request.body.enable_web_search) {
+        if (!requestBody.tools) {
+            requestBody.tools = [];
+        }
+        requestBody.tools.push({ type: 'web_search' });
+    }
+
+    // Add code execution tool if enabled
+    if (request.body.enable_code_execution) {
+        if (!requestBody.tools) {
+            requestBody.tools = [];
+        }
+        requestBody.tools.push({ type: 'code_interpreter' });
+    }
 
     const controller = new AbortController();
     request.socket.removeAllListeners('close');
@@ -213,10 +230,12 @@ router.post('/generate', async function (request, response) {
                         role: 'assistant',
                         content: json.output_text || json.output || '',
                         tool_calls: json.tool_calls || undefined,
+                        reasoning: json.reasoning || undefined, // For o1/o3 models
                     },
                     finish_reason: json.finish_reason || 'stop',
                 }],
                 usage: json.usage || undefined,
+                metadata: json.metadata || undefined,
             };
 
             response.send(transformedResponse);
