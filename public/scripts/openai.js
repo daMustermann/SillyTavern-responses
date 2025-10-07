@@ -1549,22 +1549,19 @@ export function tryParseStreamingError(response, decoded, { quiet = false } = {}
         checkQuotaError(data, { quiet });
         checkModerationError(data, { quiet });
 
-        // these do not throw correctly (equiv to Error("[object Object]"))
-        // if trying to fix "[object Object]" displayed to users, start here
-
         if (data.error) {
             !quiet && toastr.error(data.error.message || response.statusText, 'Chat Completion API');
-            throw new Error(data);
+            throw new Error(JSON.stringify(data));
         }
 
         if (data.message) {
             !quiet && toastr.error(data.message, 'Chat Completion API');
-            throw new Error(data);
+            throw new Error(JSON.stringify(data));
         }
 
         if (data.detail) {
             !quiet && toastr.error(data.detail?.error?.message || response.statusText, 'Chat Completion API');
-            throw new Error(data);
+            throw new Error(JSON.stringify(data));
         }
     }
     catch {
@@ -1588,9 +1585,7 @@ function checkQuotaError(data, { quiet = false } = {}) {
     if (data.quota_error) {
         !quiet && renderTemplateAsync('quotaError').then((html) => Popup.show.text('Quota Error', html));
 
-        // this does not throw correctly (equiv to Error("[object Object]"))
-        // if trying to fix "[object Object]" displayed to users, start here
-        throw new Error(data);
+        throw new Error(JSON.stringify(data));
     }
 }
 
