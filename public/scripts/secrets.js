@@ -68,6 +68,7 @@ export const SECRET_KEYS = {
     MINIMAX_GROUP_ID: 'minimax_group_id',
     MOONSHOT: 'api_key_moonshot',
     COMETAPI: 'api_key_cometapi',
+    RESPONSES: 'api_key_responses',
 };
 
 const FRIENDLY_NAMES = {
@@ -124,6 +125,7 @@ const FRIENDLY_NAMES = {
     [SECRET_KEYS.MOONSHOT]: 'Moonshot AI',
     [SECRET_KEYS.COMETAPI]: 'CometAPI',
     [SECRET_KEYS.AZURE_OPENAI]: 'Azure OpenAI',
+    [SECRET_KEYS.RESPONSES]: 'Responses API',
 };
 
 const INPUT_MAP = {
@@ -163,6 +165,7 @@ const INPUT_MAP = {
     [SECRET_KEYS.FIREWORKS]: '#api_key_fireworks',
     [SECRET_KEYS.COMETAPI]: '#api_key_cometapi',
     [SECRET_KEYS.AZURE_OPENAI]: '#api_key_azure_openai',
+    [SECRET_KEYS.RESPONSES]: '#api_key_responses',
 };
 
 const getLabel = () => moment().format('L LT');

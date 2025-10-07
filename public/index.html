@@ -2204,6 +2204,7 @@
                         <select id="main_api">
                             <option value="textgenerationwebui" data-i18n="Text Completion">Text Completion</option>
                             <option value="openai" data-i18n="Chat Completion">Chat Completion</option>
+                            <option value="responses" data-i18n="Responses API">Responses API</option>
                             <option value="novel" data-i18n="NovelAI">NovelAI</option>
                             <option value="koboldhorde" data-i18n="AI Horde">AI Horde</option>
                             <option value="kobold" data-i18n="KoboldAI">KoboldAI Classic</option>
@@ -3815,6 +3816,52 @@
                             <div class="online_status_indicator"></div>
                             <div class="online_status_text" data-i18n="No connection...">No connection...</div>
                         </div>
+                    </div>
+                    <div id="responses_api" style="display: none;position: relative;">
+                        <form action="javascript:void(null);" method="post" enctype="multipart/form-data">
+                            <h4 class="margin0" data-i18n="Responses API Source">
+                                <span>Responses API Source</span>
+                            </h4>
+                            <div class="flex-container flexFlowColumn flexBasis100p flexGrow flexShrink">
+                                <select id="responses_source" class="margin0">
+                                    <option value="openai" data-i18n="OpenAI (Official)">OpenAI (Official)</option>
+                                    <option value="custom" data-i18n="Custom (OpenAI-compatible)">Custom (OpenAI-compatible)</option>
+                                </select>
+                            </div>
+                            <div id="responses_openai_block" class="margin-top-10">
+                                <label for="api_key_responses_openai" data-i18n="API Key">
+                                    <span>API Key</span>
+                                </label>
+                                <input id="api_key_responses_openai" name="api_key_responses_openai" class="text_pole flex1" value="" type="text" autocomplete="off">
+                            </div>
+                            <div id="responses_custom_block" class="margin-top-10" style="display: none;">
+                                <label for="responses_custom_url" data-i18n="API URL">
+                                    <span>API URL</span>
+                                </label>
+                                <small data-i18n="Example: http://localhost:1234/v1">Example: http://localhost:1234/v1</small>
+                                <input id="responses_custom_url" name="responses_custom_url" class="text_pole" placeholder="http://localhost:1234/v1" value="" autocomplete="off">
+                                <label for="api_key_responses" class="margin-top-10" data-i18n="API Key (Optional)">
+                                    <span>API Key (Optional)</span>
+                                </label>
+                                <input id="api_key_responses" name="api_key_responses" class="text_pole flex1" value="" type="text" autocomplete="off">
+                            </div>
+                            <div id="model_responses_block" class="margin-top-10">
+                                <label for="model_responses_select" data-i18n="Model">
+                                    <span>Model</span>
+                                </label>
+                                <select id="model_responses_select" class="margin0">
+                                    <option value="">Select a model</option>
+                                </select>
+                            </div>
+                            <div class="flex-container margin-top-10">
+                                <div id="api_button_responses" class="api_button menu_button menu_button_icon" type="submit" data-i18n="Connect">Connect</div>
+                                <div class="api_loading menu_button menu_button_icon" data-i18n="Cancel">Cancel</div>
+                            </div>
+                            <div class="online_status">
+                                <div class="online_status_indicator"></div>
+                                <div class="online_status_text" data-i18n="No connection...">No connection...</div>
+                            </div>
+                        </form>
                     </div>
                 </div>
                 <div class="flex-container alignitemscenter spaceBetween wide100p">

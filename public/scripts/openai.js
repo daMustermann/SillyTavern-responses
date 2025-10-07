@@ -169,7 +169,6 @@ export let model_list = [];
 
 export const chat_completion_sources = {
     OPENAI: 'openai',
-    OPENAI_RESPONSES: 'openai-responses',
     CLAUDE: 'claude',
     OPENROUTER: 'openrouter',
     AI21: 'ai21',
@@ -1616,9 +1615,6 @@ export function getChatCompletionModel(source = null) {
             return oai_settings.claude_model;
         case chat_completion_sources.OPENAI:
             return oai_settings.openai_model;
-        case chat_completion_sources.OPENAI_RESPONSES:
-            // OpenAI Responses uses the same model as OpenAI
-            return oai_settings.openai_model;
         case chat_completion_sources.MAKERSUITE:
             return oai_settings.google_model;
         case chat_completion_sources.VERTEXAI:
@@ -2558,7 +2554,7 @@ export function getStreamingReply(data, state, { chatCompletionSource = null, ov
             state.reasoning += (data.choices?.filter(x => x?.delta?.reasoning)?.[0]?.delta?.reasoning || '');
         }
         return data.choices?.[0]?.delta?.content ?? data.choices?.[0]?.message?.content ?? data.choices?.[0]?.text ?? '';
-    } else if ([chat_completion_sources.CUSTOM, chat_completion_sources.POLLINATIONS, chat_completion_sources.AIMLAPI, chat_completion_sources.MOONSHOT, chat_completion_sources.COMETAPI, chat_completion_sources.ELECTRONHUB, chat_completion_sources.OPENAI_RESPONSES].includes(chat_completion_source)) {
+    } else if ([chat_completion_sources.CUSTOM, chat_completion_sources.POLLINATIONS, chat_completion_sources.AIMLAPI, chat_completion_sources.MOONSHOT, chat_completion_sources.COMETAPI, chat_completion_sources.ELECTRONHUB].includes(chat_completion_source)) {
         if (show_thoughts) {
             state.reasoning +=
                 data.choices?.filter(x => x?.delta?.reasoning_content)?.[0]?.delta?.reasoning_content ??
@@ -2590,7 +2586,6 @@ function parseChatCompletionLogprobs(data) {
 
     switch (oai_settings.chat_completion_source) {
         case chat_completion_sources.OPENAI:
-        case chat_completion_sources.OPENAI_RESPONSES:
         case chat_completion_sources.AZURE_OPENAI:
         case chat_completion_sources.DEEPSEEK:
         case chat_completion_sources.XAI:
@@ -5517,15 +5512,6 @@ function toggleChatCompletionForms() {
         $('#model_claude_select').trigger('change');
     }
     else if (oai_settings.chat_completion_source == chat_completion_sources.OPENAI) {
-        if (oai_settings.show_external_models && (!Array.isArray(model_list) || model_list.length == 0)) {
-            // Wait until the models list is loaded so that we could show a proper saved model
-        }
-        else {
-            $('#model_openai_select').trigger('change');
-        }
-    }
-    else if (oai_settings.chat_completion_source == chat_completion_sources.OPENAI_RESPONSES) {
-        // OpenAI Responses uses the same model selector as OpenAI
         if (oai_settings.show_external_models && (!Array.isArray(model_list) || model_list.length == 0)) {
             // Wait until the models list is loaded so that we could show a proper saved model
         }
