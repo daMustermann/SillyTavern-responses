@@ -163,7 +163,6 @@ export const GEMINI_SAFETY = [
 
 export const CHAT_COMPLETION_SOURCES = {
     OPENAI: 'openai',
-    OPENAI_RESPONSES: 'openai-responses',
     CLAUDE: 'claude',
     OPENROUTER: 'openrouter',
     AI21: 'ai21',
