@@ -3,9 +3,8 @@
  * Handles the /v1/responses endpoint from OpenAI and compatible servers
  */
 
-import { saveSettingsDebounced } from '../script.js';
+import { saveSettingsDebounced, getRequestHeaders } from '../script.js';
 import { writeSecret, SECRET_KEYS } from './secrets.js';
-import { getRequestHeaders } from './openai.js';
 
 export const responses_sources = {
     OPENAI: 'openai',
@@ -88,7 +87,7 @@ async function getStatus() {
             $('.online_status').removeClass('neutral_warning');
             $('.online_status').addClass('success');
             $('.online_status_text').text('Connected');
-            
+
             // Load models
             await loadModels();
         } else {
@@ -126,11 +125,11 @@ async function loadModels() {
         if (response.ok) {
             const data = await response.json();
             const models = data.data || [];
-            
+
             const select = $('#model_responses_select');
             select.empty();
             select.append('<option value="">Select a model</option>');
-            
+
             for (const model of models) {
                 const option = $('<option>', {
                     value: model.id,
@@ -231,7 +230,7 @@ export async function sendResponsesRequest(type, messages, signal) {
     }
 
     const data = await response.json();
-    
+
     // Transform the response to match expected format
     return {
         choices: data.choices || [],
