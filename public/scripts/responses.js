@@ -15,6 +15,13 @@ export const responses_settings = {
     responses_source: responses_sources.OPENAI,
     custom_url: '',
     model: '',
+    reasoning_effort: 'medium', // For o1/o3 models: low, medium, high
+    enable_web_search: false,
+    enable_code_execution: false,
+    temperature: 1.0,
+    max_tokens: null,
+    top_p: 1.0,
+    stream: false,
 };
 
 let is_get_status = false;
@@ -34,10 +41,38 @@ export function loadResponsesSettings(settings) {
     if (settings.responses_model !== undefined) {
         responses_settings.model = settings.responses_model;
     }
+    if (settings.responses_reasoning_effort !== undefined) {
+        responses_settings.reasoning_effort = settings.responses_reasoning_effort;
+    }
+    if (settings.responses_enable_web_search !== undefined) {
+        responses_settings.enable_web_search = settings.responses_enable_web_search;
+    }
+    if (settings.responses_enable_code_execution !== undefined) {
+        responses_settings.enable_code_execution = settings.responses_enable_code_execution;
+    }
+    if (settings.responses_temperature !== undefined) {
+        responses_settings.temperature = settings.responses_temperature;
+    }
+    if (settings.responses_max_tokens !== undefined) {
+        responses_settings.max_tokens = settings.responses_max_tokens;
+    }
+    if (settings.responses_top_p !== undefined) {
+        responses_settings.top_p = settings.responses_top_p;
+    }
+    if (settings.responses_stream !== undefined) {
+        responses_settings.stream = settings.responses_stream;
+    }
 
     $('#responses_source').val(responses_settings.responses_source);
     $('#responses_custom_url').val(responses_settings.custom_url);
     $('#model_responses_select').val(responses_settings.model);
+    $('#responses_reasoning_effort').val(responses_settings.reasoning_effort);
+    $('#responses_enable_web_search').prop('checked', responses_settings.enable_web_search);
+    $('#responses_enable_code_execution').prop('checked', responses_settings.enable_code_execution);
+    $('#responses_temperature').val(responses_settings.temperature);
+    $('#responses_max_tokens').val(responses_settings.max_tokens || '');
+    $('#responses_top_p').val(responses_settings.top_p);
+    $('#responses_stream').prop('checked', responses_settings.stream);
 
     onResponsesSourceChange();
 }
@@ -184,6 +219,51 @@ export function initResponsesApi() {
         saveSettingsDebounced();
     });
 
+    // Reasoning effort (for o1/o3 models)
+    $('#responses_reasoning_effort').on('change', function () {
+        responses_settings.reasoning_effort = String($(this).val());
+        saveSettingsDebounced();
+    });
+
+    // Web search toggle
+    $('#responses_enable_web_search').on('change', function () {
+        responses_settings.enable_web_search = Boolean($(this).prop('checked'));
+        saveSettingsDebounced();
+    });
+
+    // Code execution toggle
+    $('#responses_enable_code_execution').on('change', function () {
+        responses_settings.enable_code_execution = Boolean($(this).prop('checked'));
+        saveSettingsDebounced();
+    });
+
+    // Temperature slider
+    $('#responses_temperature').on('input', function () {
+        responses_settings.temperature = Number($(this).val());
+        $('#responses_temperature_value').text(responses_settings.temperature.toFixed(2));
+        saveSettingsDebounced();
+    });
+
+    // Max tokens
+    $('#responses_max_tokens').on('input', function () {
+        const value = String($(this).val());
+        responses_settings.max_tokens = value ? Number(value) : null;
+        saveSettingsDebounced();
+    });
+
+    // Top P slider
+    $('#responses_top_p').on('input', function () {
+        responses_settings.top_p = Number($(this).val());
+        $('#responses_top_p_value').text(responses_settings.top_p.toFixed(2));
+        saveSettingsDebounced();
+    });
+
+    // Stream toggle
+    $('#responses_stream').on('change', function () {
+        responses_settings.stream = Boolean($(this).prop('checked'));
+        saveSettingsDebounced();
+    });
+
     // Connect button
     $('#api_button_responses').on('click', onApiButtonPress);
 
@@ -206,15 +286,24 @@ export function initResponsesApi() {
  * @param {string} type - The request type ('normal', 'continue', 'quiet', etc.)
  * @param {any} messages - The messages array
  * @param {AbortSignal} signal - Abort signal
+ * @param {object} options - Additional options for the request
  * @returns {Promise<any>} - The response data
  */
-export async function sendResponsesRequest(type, messages, signal) {
+export async function sendResponsesRequest(type, messages, signal, options = {}) {
     const generate_data = {
         type: type,
         messages: messages,
         model: responses_settings.model,
         responses_source: responses_settings.responses_source,
         custom_url: responses_settings.custom_url,
+        reasoning_effort: responses_settings.reasoning_effort,
+        enable_web_search: responses_settings.enable_web_search,
+        enable_code_execution: responses_settings.enable_code_execution,
+        temperature: responses_settings.temperature,
+        max_tokens: responses_settings.max_tokens,
+        top_p: responses_settings.top_p,
+        stream: responses_settings.stream,
+        ...options, // Allow override of settings with explicit options
     };
 
     const generate_url = '/api/backends/responses/generate';
@@ -226,7 +315,8 @@ export async function sendResponsesRequest(type, messages, signal) {
     });
 
     if (!response.ok) {
-        throw new Error(`Got response status ${response.status}`);
+        const errorText = await response.text();
+        throw new Error(`Got response status ${response.status}: ${errorText}`);
     }
 
     const data = await response.json();
@@ -235,5 +325,8 @@ export async function sendResponsesRequest(type, messages, signal) {
     return {
         choices: data.choices || [],
         usage: data.usage || {},
+        reasoning: data.reasoning || null, // For o1/o3 models
+        metadata: data.metadata || {},
+        response_id: data.id || null, // For conversation tracking
     };
 }
